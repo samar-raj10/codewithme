@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const requireAuth = require('../middleware/requireAuth');
 const {
   createProblem,
   getProblems,
@@ -9,6 +10,9 @@ const {
   deleteProblem,
   getStats
 } = require('../controllers/problemController');
+
+// Protect ALL problem endpoints with Supabase Auth middleware
+router.use(requireAuth);
 
 // Stats endpoint
 router.get('/stats', getStats);

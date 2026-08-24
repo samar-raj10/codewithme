@@ -23,6 +23,11 @@ const RevisionLogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const ProblemSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: [true, 'userId is required'],
+    index: true
+  },
   questionNumber: {
     type: Number,
     required: [true, 'Question number is required'],
@@ -76,8 +81,8 @@ ProblemSchema.methods.updateCalculatedStatus = function() {
 };
 
 // Index for efficient sorting and querying
-ProblemSchema.index({ questionNumber: 1 });
-ProblemSchema.index({ nextRevisionDate: 1 });
-ProblemSchema.index({ status: 1 });
+ProblemSchema.index({ userId: 1, questionNumber: 1 });
+ProblemSchema.index({ userId: 1, nextRevisionDate: 1 });
+ProblemSchema.index({ userId: 1, status: 1 });
 
 module.exports = mongoose.model('Problem', ProblemSchema);

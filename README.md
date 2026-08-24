@@ -1,48 +1,53 @@
 # LeetRevise 🧠⚡
 
-**LeetRevise** is a personal, full-stack LeetCode revision tracker built with the MERN stack (MongoDB, Express, React, Node.js). It leverages spaced repetition to prompt you when to revisit problems you've previously solved, ensuring key algorithm patterns stay fresh in your long-term memory.
+**LeetRevise** is a multi-user, full-stack LeetCode revision tracker built with the MERN stack (MongoDB, Express, React, Node.js) and Supabase Authentication. It leverages spaced repetition to prompt you when to revisit problems you've solved, ensuring algorithm patterns stay fresh in your memory.
 
 ---
 
 ## 🚀 Features
 
+- **Multi-User Data Isolation**: Powered by Supabase Authentication. Every user's dashboard, problems, and revision history are strictly isolated and encrypted.
 - **Spaced Repetition Engine**: Automated interval scheduling (`day3` → `day7` → `day10` → `day21` → `random-cycle 15-45d`).
 - **Due Today Dashboard**: Prominent cards highlighting problems requiring action today with celebratory confetti upon revision completion.
+- **LeetCode Hint Notes**: Toggleable **Show Hint / Notes** feature displaying user-submitted approaches and notes on demand.
 - **Dynamic Revision Status**: Real-time status calculation (`due`, `overdue`, `pending`, `in-random-cycle`).
 - **Revision History Timeline**: Modal view tracking every completed or skipped revision checkpoint for each problem.
 - **Revision Heatmap & Streak**: GitHub-style contribution grid displaying daily consistency over 16 weeks along with active streak tracking.
 - **LeetCode Aesthetic UI**: Dark/Light mode toggle with `localStorage` persistence, orange accents (`#FFA116`), monospace badges for problem numbers, and responsive layouts.
-- **Zero-Config Database Setup**: Automatically uses `mongodb-memory-server` fallback if a local MongoDB server is not running!
 
 ---
 
-## 🛠️ Stack & Structure
+## 🔐 Supabase Authentication Setup
 
-- **Frontend**: React (Vite, JavaScript), Tailwind CSS, Lucide React, Canvas Confetti, Axios.
-- **Backend**: Node.js, Express, MongoDB & Mongoose.
+LeetRevise uses **Supabase Auth** for Email/Password registration and login.
 
+### 1. Environment Variables
+
+#### Backend (`backend/.env`)
+```env
+PORT=5050
+MONGO_URI=mongodb://127.0.0.1:27017/leetrevise
+USE_MEMORY_DB=false
+
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
-leetrevise/
-├── backend/                # Express API Server
-│   ├── config/             # DB connection & repetition constants
-│   ├── controllers/        # REST route handlers
-│   ├── models/             # Mongoose Problem & Revision history schemas
-│   ├── routes/             # API routes definition
-│   ├── utils/              # Date calculations & status mapping
-│   ├── server.js           # Server entry point
-│   ├── .env.example        # Environment variables template
-│   └── package.json
-├── frontend/               # React (Vite) UI
-│   ├── src/
-│   │   ├── components/     # UI Components (Header, DueSection, Heatmap, etc.)
-│   │   ├── context/        # Dark/Light ThemeContext
-│   │   ├── services/       # Axios API client
-│   │   ├── utils/          # Date formatters & stage styles
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── vite.config.js
-│   └── package.json
-└── README.md
+
+#### Frontend (`frontend/.env`)
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+---
+
+## 🛠️ Data Migration Script
+
+If you have existing problems created prior to auth integration, run the migration script to backfill them to your Supabase User UUID:
+
+```bash
+cd backend
+node scripts/backfillUserId.js <YOUR_SUPABASE_USER_UUID>
 ```
 
 ---
@@ -52,7 +57,7 @@ leetrevise/
 ### 1. Prerequisites
 - Node.js (v18+)
 - npm (v9+)
-- *(Optional)* Local MongoDB instance. If MongoDB is not running locally, the backend will automatically spin up an in-memory database!
+- *(Optional)* Local MongoDB instance. (Falls back to `mongodb-memory-server` if local MongoDB is not running).
 
 ---
 
@@ -66,13 +71,6 @@ npm run dev
 
 The backend server starts on `http://localhost:5050`.
 
-#### Environment Variables (`backend/.env`)
-```env
-PORT=5050
-MONGO_URI=mongodb://127.0.0.1:27017/leetrevise
-USE_MEMORY_DB=false
-```
-
 ---
 
 ### 3. Running the Frontend
@@ -85,32 +83,20 @@ npm install
 npm run dev
 ```
 
-The frontend application starts on `http://localhost:3030` (with automatic proxy to the backend API).
+The frontend application starts on `http://localhost:3030`.
 
 ---
 
-## 📡 REST API Reference
+## 📡 REST API Reference (All Routes Require Auth)
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/problems` | Log a new problem attempt (`questionNumber`, `questionTitle`, `notes`) |
-| `GET` | `/api/problems` | Get all problems (Supports filtering by `status` and `search`) |
-| `GET` | `/api/problems/due` | Get problems due today or overdue |
-| `GET` | `/api/problems/stats` | Get dashboard stats, streak counter, and heatmap data |
-| `PATCH` | `/api/problems/:id/revise` | Mark revision completed or skipped (triggers stage advancement) |
-| `PATCH` | `/api/problems/:id` | Edit problem notes or title |
-| `DELETE` | `/api/problems/:id` | Remove a problem from tracking |
+| `GET` | `/api/problems` | Get user's problems (Supports filtering by `status` and `search`) |
+| `GET` | `/api/problems/due` | Get user's problems due today or overdue |
+| `GET` | `/api/problems/stats` | Get user's stats, streak counter, and heatmap data |
+| `PATCH` | `/api/problems/:id/revise` | Mark user's revision completed or skipped |
+| `PATCH` | `/api/problems/:id` | Edit user's problem notes or title |
+| `DELETE` | `/api/problems/:id` | Remove a problem from user's tracking |
 
----
-
-## 🔄 Spaced Repetition Logic
-
-1. **Initial Log**: `firstAttemptDate = now`, `stage = "day3"`, `nextRevisionDate = firstAttemptDate + 3 days`.
-2. **Revising a Problem**:
-   - Marking complete logs the checkpoint in `revisionHistory` and advances stage:
-     - `day3` → `day7` (+7 days)
-     - `day7` → `day10` (+10 days)
-     - `day10` → `day21` (+21 days)
-     - `day21` → `random-cycle` (+ random 15..45 days)
-     - `random-cycle` → `random-cycle` (+ random 15..45 days)
-3. **Skipping**: Problem remains `due`/`overdue` until acted upon—no silent stage advancement without user confirmation.
+*All requests must include `Authorization: Bearer <SUPABASE_JWT_TOKEN>` header.*

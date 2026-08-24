@@ -8,6 +8,11 @@ const { addDays, getNextStageAndDate, calculateProblemStatus, formatDateKey } = 
 exports.createProblem = async (req, res) => {
   try {
     const { questionNumber, questionTitle, notes } = req.body;
+    const userId = req.userId; // Extracted from verified Supabase token
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User ID missing from request' });
+    }
 
     // Input Validation
     if (questionNumber === undefined || questionNumber === null || questionNumber === '') {
@@ -26,6 +31,7 @@ exports.createProblem = async (req, res) => {
     const initialStatus = calculateProblemStatus(nextRevisionDate, revisionStage);
 
     const problem = new Problem({
+      userId,
       questionNumber: num,
       questionTitle: (questionTitle || '').trim(),
       firstAttemptDate,
@@ -50,14 +56,15 @@ exports.createProblem = async (req, res) => {
 };
 
 /**
- * @desc    Get all tracked problems with optional filtering, sorting, and search
+ * @desc    Get all tracked problems for the authenticated user
  * @route   GET /api/problems
  */
 exports.getProblems = async (req, res) => {
   try {
     const { status, sortBy = 'nextRevisionDate', order = 'asc', search } = req.query;
+    const userId = req.userId;
 
-    let query = {};
+    let query = { userId };
 
     if (search) {
       const searchNum = Number(search);
@@ -74,12 +81,10 @@ exports.getProblems = async (req, res) => {
     let problems = await Problem.find(query);
 
     // Dynamic status sync for each problem based on today's date
-    let modified = false;
     for (let p of problems) {
-      const currentCalculatedStatus = p.updateCalculatedStatus();
+      p.updateCalculatedStatus();
       if (p.isModified('status')) {
         await p.save();
-        modified = true;
       }
     }
 
@@ -118,12 +123,13 @@ exports.getProblems = async (req, res) => {
 };
 
 /**
- * @desc    Get problems due today or overdue
+ * @desc    Get user's problems due today or overdue
  * @route   GET /api/problems/due
  */
 exports.getDueProblems = async (req, res) => {
   try {
-    const problems = await Problem.find({});
+    const userId = req.userId;
+    const problems = await Problem.find({ userId });
 
     // Update status dynamically and filter due/overdue
     const dueProblems = [];
@@ -158,9 +164,10 @@ exports.getDueProblems = async (req, res) => {
 exports.reviseProblem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { action = 'complete' } = req.body; // 'complete' or 'skip'
+    const { action = 'complete' } = req.body;
+    const userId = req.userId;
 
-    const problem = await Problem.findById(id);
+    const problem = await Problem.findOne({ _id: id, userId });
     if (!problem) {
       return res.status(404).json({ success: false, message: 'Problem not found' });
     }
@@ -168,7 +175,6 @@ exports.reviseProblem = async (req, res) => {
     const now = new Date();
 
     if (action === 'complete') {
-      // 1. Log in revisionHistory
       problem.revisionHistory.push({
         stage: problem.revisionStage,
         scheduledDate: problem.nextRevisionDate,
@@ -176,14 +182,11 @@ exports.reviseProblem = async (req, res) => {
         wasCompleted: true
       });
 
-      // 2. Advance stage and recalculate nextRevisionDate
       const { nextStage, nextRevisionDate } = getNextStageAndDate(problem.revisionStage, now);
       problem.revisionStage = nextStage;
       problem.nextRevisionDate = nextRevisionDate;
 
-      // 3. Recalculate status
       problem.updateCalculatedStatus();
-
       await problem.save();
 
       return res.status(200).json({
@@ -192,7 +195,6 @@ exports.reviseProblem = async (req, res) => {
         data: problem
       });
     } else if (action === 'skip') {
-      // Log skip in history
       problem.revisionHistory.push({
         stage: problem.revisionStage,
         scheduledDate: problem.nextRevisionDate,
@@ -200,7 +202,6 @@ exports.reviseProblem = async (req, res) => {
         wasCompleted: false
       });
 
-      // Keep stage as is, but problem remains overdue/due without silently advancing
       problem.updateCalculatedStatus();
       await problem.save();
 
@@ -219,15 +220,16 @@ exports.reviseProblem = async (req, res) => {
 };
 
 /**
- * @desc    Edit notes, title, or question number
+ * @desc    Edit notes, title, or question number for a user problem
  * @route   PATCH /api/problems/:id
  */
 exports.updateProblem = async (req, res) => {
   try {
     const { id } = req.params;
     const { questionNumber, questionTitle, notes } = req.body;
+    const userId = req.userId;
 
-    const problem = await Problem.findById(id);
+    const problem = await Problem.findOne({ _id: id, userId });
     if (!problem) {
       return res.status(404).json({ success: false, message: 'Problem not found' });
     }
@@ -262,14 +264,15 @@ exports.updateProblem = async (req, res) => {
 };
 
 /**
- * @desc    Delete a problem
+ * @desc    Delete a problem owned by the user
  * @route   DELETE /api/problems/:id
  */
 exports.deleteProblem = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.userId;
 
-    const problem = await Problem.findByIdAndDelete(id);
+    const problem = await Problem.findOneAndDelete({ _id: id, userId });
     if (!problem) {
       return res.status(404).json({ success: false, message: 'Problem not found' });
     }
@@ -286,12 +289,13 @@ exports.deleteProblem = async (req, res) => {
 };
 
 /**
- * @desc    Get dashboard statistics, streak, and revision activity heatmap
+ * @desc    Get user's dashboard statistics, streak, and revision activity heatmap
  * @route   GET /api/problems/stats
  */
 exports.getStats = async (req, res) => {
   try {
-    const problems = await Problem.find({});
+    const userId = req.userId;
+    const problems = await Problem.find({ userId });
 
     let totalTracked = problems.length;
     let dueCount = 0;
@@ -308,7 +312,6 @@ exports.getStats = async (req, res) => {
         inRandomCycleCount++;
       }
 
-      // Process revision history for heatmap & streak
       p.revisionHistory.forEach(entry => {
         if (entry.wasCompleted && entry.completedDate) {
           const dateKey = formatDateKey(entry.completedDate);
@@ -318,16 +321,15 @@ exports.getStats = async (req, res) => {
     });
 
     // Calculate streak
-    const sortedCompletedDates = Object.keys(completedDatesMap).sort().reverse(); // newest first
+    const sortedCompletedDates = Object.keys(completedDatesMap).sort().reverse();
     let streak = 0;
-    
+
     if (sortedCompletedDates.length > 0) {
       const todayStr = formatDateKey(new Date());
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = formatDateKey(yesterday);
 
-      // Check if user has done revision today or yesterday to maintain active streak
       let currentCheck = new Date();
       if (!completedDatesMap[todayStr] && completedDatesMap[yesterdayStr]) {
         currentCheck = yesterday;

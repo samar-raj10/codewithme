@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon, Flame, RefreshCw, Layers, PlusCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Sun, Moon, Flame, RefreshCw, Layers, PlusCircle, LogOut, User } from 'lucide-react';
 
 export function Header({ stats, onRefresh, onOpenMobileLog }) {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 dark:bg-leetcode-dark/80 backdrop-blur-md border-b border-gray-200 dark:border-leetcode-dark-border transition-colors">
@@ -28,8 +30,8 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
           </div>
         </div>
 
-        {/* Stats Quick Badges & Controls */}
-        <div className="flex items-center gap-3">
+        {/* User Badge, Stats & Controls */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {stats && (
             <div className="hidden md:flex items-center gap-3 bg-gray-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700/60 text-xs">
               <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold" title="Current daily revision streak">
@@ -41,6 +43,14 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
                 <Layers className="w-3.5 h-3.5" />
                 <span>{stats.totalTracked || 0} Tracked</span>
               </div>
+            </div>
+          )}
+
+          {/* User Account Email Badge */}
+          {user && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700/60 text-xs text-gray-700 dark:text-gray-300 font-medium">
+              <User className="w-3.5 h-3.5 text-leetcode-orange" />
+              <span className="truncate max-w-[140px]">{user.email}</span>
             </div>
           )}
 
@@ -59,7 +69,7 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
             className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-leetcode-orange hover:bg-leetcode-orange-hover text-white text-xs font-semibold shadow-md transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Log Problem</span>
+            <span>Log</span>
           </button>
 
           {/* Dark / Light Mode Toggle */}
@@ -70,6 +80,18 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
           >
             {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
           </button>
+
+          {/* Sign Out Button */}
+          {user && (
+            <button
+              onClick={signOut}
+              title="Sign Out of LeetRevise"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 text-xs font-semibold transition-all shadow-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

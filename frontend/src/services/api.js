@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 const API_BASE_URL = '/api';
 
@@ -7,6 +8,29 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   }
+});
+
+// Dynamic Request Interceptor injecting Supabase Authorization Bearer Token
+api.interceptors.request.use(async (config) => {
+  try {
+    if (isSupabaseConfigured) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+    } else {
+      const savedDemoUser = localStorage.getItem('leetrevise_demo_user');
+      if (savedDemoUser) {
+        const parsedUser = JSON.parse(savedDemoUser);
+        config.headers.Authorization = `Bearer demo-user-${parsedUser.id}`;
+      }
+    }
+  } catch (err) {
+    console.error('Error attaching auth token to API request:', err);
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export async function fetchProblems(params = {}) {

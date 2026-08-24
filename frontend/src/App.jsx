@@ -9,6 +9,8 @@ import { ProblemHistoryModal } from './components/ProblemHistoryModal';
 import { EditProblemModal } from './components/EditProblemModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { Toast } from './components/Toast';
+import { AuthPage } from './pages/AuthPage';
+import { useAuth } from './context/AuthContext';
 import {
   fetchProblems,
   fetchDueProblems,
@@ -18,9 +20,11 @@ import {
   updateProblem,
   deleteProblem
 } from './services/api';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 
 export function App() {
+  const { user, loading: authLoading } = useAuth();
+
   const [problems, setProblems] = useState([]);
   const [dueProblems, setDueProblems] = useState([]);
   const [stats, setStats] = useState(null);
@@ -47,6 +51,7 @@ export function App() {
   };
 
   const loadDashboardData = useCallback(async () => {
+    if (!user) return;
     try {
       setLoading(true);
       const [problemsRes, dueRes, statsRes] = await Promise.all([
@@ -69,11 +74,13 @@ export function App() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, searchQuery, sortBy, sortOrder]);
+  }, [user, filterStatus, searchQuery, sortBy, sortOrder]);
 
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user, loadDashboardData]);
 
   // Log new problem handler
   const handleLogProblem = async (formData) => {
@@ -138,6 +145,21 @@ export function App() {
     }
   };
 
+  // Render Auth Loading State
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-leetcode-dark text-leetcode-orange">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Render Auth Login/Signup Page if not signed in
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  // Render Protected Dashboard for Authenticated User
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-leetcode-dark text-gray-900 dark:text-gray-100 pb-12 transition-colors">
       {/* Header */}
