@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, History, Edit3, Trash2, ArrowUpDown, ExternalLink, Calendar, Filter, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Search, History, Edit3, Trash2, ArrowUpDown, ExternalLink, Calendar, Filter, CheckCircle2, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate, getRelativeTimeString, STAGE_LABELS, STAGE_BADGE_COLORS, STATUS_BADGE_CONFIG } from '../utils/dateHelpers';
 
 export function ProblemTable({
@@ -17,6 +17,15 @@ export function ProblemTable({
   onDeleteProblem,
   onRevise
 }) {
+  const [revealedNotes, setRevealedNotes] = useState({});
+
+  const toggleNoteHint = (problemId) => {
+    setRevealedNotes(prev => ({
+      ...prev,
+      [problemId]: !prev[problemId]
+    }));
+  };
+
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -99,6 +108,7 @@ export function ProblemTable({
                   </button>
                 </th>
                 <th className="py-3 px-3">Title</th>
+                <th className="py-3 px-3">Approach & Notes</th>
                 <th className="py-3 px-3">Stage</th>
                 <th className="py-3 px-3">
                   <button
@@ -119,6 +129,7 @@ export function ProblemTable({
                 const stageBadge = STAGE_BADGE_COLORS[problem.revisionStage] || STAGE_BADGE_COLORS.day3;
                 const stageLabel = STAGE_LABELS[problem.revisionStage] || problem.revisionStage;
                 const isDueOrOverdue = problem.status === 'due' || problem.status === 'overdue';
+                const isNoteRevealed = revealedNotes[problem._id];
 
                 return (
                   <tr
@@ -132,7 +143,7 @@ export function ProblemTable({
                       </span>
                     </td>
 
-                    {/* Title & Notes */}
+                    {/* Title */}
                     <td className="py-3.5 px-3 max-w-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-gray-900 dark:text-white truncate">
@@ -148,10 +159,40 @@ export function ProblemTable({
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
-                      {problem.notes && (
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1 italic mt-0.5">
-                          {problem.notes}
-                        </p>
+                    </td>
+
+                    {/* Approach & Notes (LeetCode Hint style) */}
+                    <td className="py-3.5 px-3 max-w-xs">
+                      {!problem.notes || !problem.notes.trim() ? (
+                        <span className="text-gray-400 dark:text-gray-600 text-[11px] italic">No notes</span>
+                      ) : !isNoteRevealed ? (
+                        <button
+                          onClick={() => toggleNoteHint(problem._id)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[11px] font-semibold transition-all shadow-sm group-hover:border-amber-500/40"
+                          title="Click to reveal your approach notes (LeetCode Hint style)"
+                        >
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Show Hint / Notes</span>
+                          <ChevronDown className="w-3 h-3 text-amber-500" />
+                        </button>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 text-xs text-gray-800 dark:text-gray-200 animate-fade-in space-y-1">
+                          <div className="flex items-center justify-between font-semibold text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                            <span className="flex items-center gap-1">
+                              <Lightbulb className="w-3 h-3 text-amber-500" />
+                              Approach & Notes
+                            </span>
+                            <button
+                              onClick={() => toggleNoteHint(problem._id)}
+                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[10px] underline"
+                            >
+                              Hide
+                            </button>
+                          </div>
+                          <p className="whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                            {problem.notes}
+                          </p>
+                        </div>
                       )}
                     </td>
 
@@ -224,3 +265,4 @@ export function ProblemTable({
     </div>
   );
 }
+

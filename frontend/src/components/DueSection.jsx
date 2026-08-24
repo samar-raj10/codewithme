@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { CheckCircle, SkipForward, AlertTriangle, Clock, ExternalLink, StickyNote, History } from 'lucide-react';
+import { CheckCircle, SkipForward, AlertTriangle, Clock, ExternalLink, Lightbulb, ChevronDown, History } from 'lucide-react';
 import { formatDate, getRelativeTimeString, STAGE_LABELS, STAGE_BADGE_COLORS } from '../utils/dateHelpers';
 
 export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
   const [loadingId, setLoadingId] = useState(null);
+  const [revealedNotes, setRevealedNotes] = useState({});
+
+  const toggleNoteHint = (problemId, e) => {
+    e.stopPropagation();
+    setRevealedNotes(prev => ({
+      ...prev,
+      [problemId]: !prev[problemId]
+    }));
+  };
 
   const handleMarkComplete = async (problem, e) => {
     e.stopPropagation();
@@ -143,11 +152,39 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
                   )}
                 </div>
 
-                {/* Notes Preview if available */}
-                {problem.notes && (
-                  <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-800/60 border border-gray-100 dark:border-zinc-700/50 mb-4 text-xs text-gray-600 dark:text-gray-300 italic flex items-start gap-1.5">
-                    <StickyNote className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                    <span className="line-clamp-2">{problem.notes}</span>
+                {/* Notes & Hint Toggle */}
+                {problem.notes && problem.notes.trim() && (
+                  <div className="mb-4">
+                    {!revealedNotes[problem._id] ? (
+                      <button
+                        onClick={(e) => toggleNoteHint(problem._id, e)}
+                        className="w-full py-1.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold flex items-center justify-between transition-all"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Show Hint / Notes</span>
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-amber-500" />
+                      </button>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-500/30 text-xs text-gray-800 dark:text-gray-200 animate-fade-in space-y-1">
+                        <div className="flex items-center justify-between font-semibold text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                          <span className="flex items-center gap-1">
+                            <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                            Approach & Notes
+                          </span>
+                          <button
+                            onClick={(e) => toggleNoteHint(problem._id, e)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[10px] underline"
+                          >
+                            Hide
+                          </button>
+                        </div>
+                        <p className="whitespace-pre-wrap text-xs leading-relaxed">
+                          {problem.notes}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
