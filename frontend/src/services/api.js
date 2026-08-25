@@ -1,7 +1,19 @@
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
-const API_BASE_URL = import.meta.env.API_URL || import.meta.env.VITE_API_URL || '/api';
+function getNormalizedApiUrl() {
+  let envUrl = import.meta.env.API_URL || import.meta.env.VITE_API_URL || '/api';
+  envUrl = envUrl.trim().replace(/\/+$/, '');
+  
+  if (envUrl.startsWith('http')) {
+    if (!envUrl.endsWith('/api')) {
+      envUrl = `${envUrl}/api`;
+    }
+  }
+  return envUrl;
+}
+
+const API_BASE_URL = getNormalizedApiUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

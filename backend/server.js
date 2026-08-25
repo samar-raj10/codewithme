@@ -10,6 +10,22 @@ dotenv.config();
 
 const app = express();
 
+// Dynamic CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : true;
+
+const corsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS', 'PUT'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+app.use(express.json());
+
 // Middleware to ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
   try {
@@ -25,25 +41,17 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Dynamic CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : true;
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json());
-
-// API Routes
-app.use('/api/problems', problemRoutes);
-
-// Healthcheck route
+// Healthcheck routes
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
+});
+
+// API Routes mounted on both /api/problems and /problems for fail-safe URL matching
+app.use('/api/problems', problemRoutes);
+app.use('/problems', problemRoutes);
 
 // Production Static Serving & SPA Fallback (When served together on single server)
 if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
@@ -51,7 +59,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   app.use(express.static(distPath));
 
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
+    if (req.path.startsWith('/api') || req.path.startsWith('/problems')) {
       return next();
     }
     res.sendFile(path.resolve(distPath, 'index.html'));
