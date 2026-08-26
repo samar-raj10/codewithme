@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from './components/Header';
-import { StatsOverview } from './components/StatsOverview';
-import { RevisionHeatmap } from './components/RevisionHeatmap';
-import { DueSection } from './components/DueSection';
-import { SidebarForm } from './components/SidebarForm';
-import { ProblemTable } from './components/ProblemTable';
-import { ProblemHistoryModal } from './components/ProblemHistoryModal';
-import { EditProblemModal } from './components/EditProblemModal';
-import { ConfirmModal } from './components/ConfirmModal';
-import { Toast } from './components/Toast';
-import { AuthPage } from './pages/AuthPage';
-import { useAuth } from './context/AuthContext';
+import React, { useState, useEffect, useCallback } from "react";
+import { Header } from "./components/Header";
+import { StatsOverview } from "./components/StatsOverview";
+import { RevisionHeatmap } from "./components/RevisionHeatmap";
+import { DueSection } from "./components/DueSection";
+import { SidebarForm } from "./components/SidebarForm";
+import { ProblemTable } from "./components/ProblemTable";
+import { ProblemHistoryModal } from "./components/ProblemHistoryModal";
+import { EditProblemModal } from "./components/EditProblemModal";
+import { ConfirmModal } from "./components/ConfirmModal";
+import { Toast } from "./components/Toast";
+import { AuthPage } from "./pages/AuthPage";
+import { useAuth } from "./context/AuthContext";
 import {
   fetchProblems,
   fetchDueProblems,
@@ -18,9 +18,9 @@ import {
   createProblem,
   reviseProblem,
   updateProblem,
-  deleteProblem
-} from './services/api';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+  deleteProblem,
+} from "./services/api";
+import { X, Sparkles, Loader2 } from "lucide-react";
 
 export function App() {
   const { user, loading: authLoading } = useAuth();
@@ -32,10 +32,10 @@ export function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filters & Sorting
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('nextRevisionDate');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("nextRevisionDate");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   // Modals & Drawers
   const [selectedHistoryProblem, setSelectedHistoryProblem] = useState(null);
@@ -46,7 +46,7 @@ export function App() {
   // Toast feedback
   const [toast, setToast] = useState(null);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
 
@@ -59,18 +59,21 @@ export function App() {
           status: filterStatus,
           search: searchQuery,
           sortBy,
-          order: sortOrder
+          order: sortOrder,
         }),
         fetchDueProblems(),
-        fetchStats()
+        fetchStats(),
       ]);
 
       if (problemsRes.success) setProblems(problemsRes.data || []);
       if (dueRes.success) setDueProblems(dueRes.data || []);
       if (statsRes.success) setStats(statsRes.data || null);
     } catch (error) {
-      console.error('Error loading dashboard:', error);
-      showToast('Error connecting to backend server. Make sure backend is running.', 'error');
+      console.error("Error loading dashboard:", error);
+      showToast(
+        "Error connecting to backend server. Make sure backend is running.",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -88,12 +91,18 @@ export function App() {
     try {
       const res = await createProblem(formData);
       if (res.success) {
-        showToast(`Problem #${res.data.questionNumber} logged! First revision in 3 days.`, 'success');
+        showToast(
+          `Problem #${res.data.questionNumber} logged! First revision in 3 days.`,
+          "success",
+        );
         setMobileLogOpen(false);
         await loadDashboardData();
       }
     } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to log problem.', 'error');
+      showToast(
+        error.response?.data?.message || "Failed to log problem.",
+        "error",
+      );
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -101,19 +110,22 @@ export function App() {
   };
 
   // Revise problem handler
-  const handleRevise = async (id, action = 'complete') => {
+  const handleRevise = async (id, action = "complete") => {
     try {
       const res = await reviseProblem(id, action);
       if (res.success) {
-        if (action === 'complete') {
-          showToast(res.message, 'success');
+        if (action === "complete") {
+          showToast(res.message, "success");
         } else {
-          showToast('Revision skipped for today.', 'info');
+          showToast("Revision skipped for today.", "info");
         }
         await loadDashboardData();
       }
     } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to update revision.', 'error');
+      showToast(
+        error.response?.data?.message || "Failed to update revision.",
+        "error",
+      );
     }
   };
 
@@ -122,11 +134,11 @@ export function App() {
     try {
       const res = await updateProblem(id, updateData);
       if (res.success) {
-        showToast('Problem details updated successfully.', 'success');
+        showToast("Problem details updated successfully.", "success");
         await loadDashboardData();
       }
     } catch (error) {
-      showToast('Failed to update problem.', 'error');
+      showToast("Failed to update problem.", "error");
     }
   };
 
@@ -136,12 +148,15 @@ export function App() {
     try {
       const res = await deleteProblem(deletingProblem._id);
       if (res.success) {
-        showToast(`Removed #${deletingProblem.questionNumber} from tracking.`, 'info');
+        showToast(
+          `Removed #${deletingProblem.questionNumber} from tracking.`,
+          "info",
+        );
         setDeletingProblem(null);
         await loadDashboardData();
       }
     } catch (error) {
-      showToast('Failed to delete problem.', 'error');
+      showToast("Failed to delete problem.", "error");
     }
   };
 
@@ -219,7 +234,7 @@ export function App() {
       {/* Mobile Sidebar Bottom Sheet / Modal */}
       {mobileLogOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm lg:hidden">
-          <div className="w-full sm:max-w-md bg-white dark:bg-leetcode-dark-card rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="w-full sm:max-w-md bg-white dark:bg-leetcode-dark-card rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-leetcode-orange" />

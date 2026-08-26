@@ -1,7 +1,16 @@
-import React from 'react';
-import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
-import { Sun, Moon, Flame, RefreshCw, Layers, PlusCircle, LogOut, User } from 'lucide-react';
+import React from "react";
+import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import {
+  Sun,
+  Moon,
+  Flame,
+  RefreshCw,
+  Layers,
+  PlusCircle,
+  LogOut,
+  User,
+} from "lucide-react";
 
 export function Header({ stats, onRefresh, onOpenMobileLog }) {
   const { darkMode, toggleDarkMode } = useTheme();
@@ -17,10 +26,10 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
+              <h1 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
                 Leet<span className="text-leetcode-orange">Revise</span>
-              </span>
-              <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-md bg-leetcode-orange/10 text-leetcode-orange border border-leetcode-orange/20">
+              </h1>
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-leetcode-orange/10 text-leetcode-orange border border-leetcode-orange/20">
                 Spaced Repetition
               </span>
             </div>
@@ -34,7 +43,10 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
         <div className="flex items-center gap-2.5 sm:gap-3">
           {stats && (
             <div className="hidden md:flex items-center gap-3 bg-gray-100 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700/60 text-xs">
-              <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold" title="Current daily revision streak">
+              <div
+                className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold"
+                title="Current daily revision streak"
+              >
                 <Flame className="w-4 h-4 text-leetcode-orange animate-bounce-subtle" />
                 <span>{stats.streak || 0} Day Streak</span>
               </div>
@@ -75,10 +87,14 @@ export function Header({ stats, onRefresh, onOpenMobileLog }) {
           {/* Dark / Light Mode Toggle */}
           <button
             onClick={toggleDarkMode}
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             className="p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-amber-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-700" />
+            )}
           </button>
 
           {/* Sign Out Button */}

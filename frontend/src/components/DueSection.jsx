@@ -1,7 +1,21 @@
-import React, { useState } from 'react';
-import confetti from 'canvas-confetti';
-import { CheckCircle, SkipForward, AlertTriangle, Clock, ExternalLink, Lightbulb, ChevronDown, History } from 'lucide-react';
-import { formatDate, getRelativeTimeString, STAGE_LABELS, STAGE_BADGE_COLORS } from '../utils/dateHelpers';
+import React, { useState } from "react";
+import confetti from "canvas-confetti";
+import {
+  CheckCircle,
+  SkipForward,
+  AlertTriangle,
+  Clock,
+  ExternalLink,
+  Lightbulb,
+  ChevronDown,
+  History,
+} from "lucide-react";
+import {
+  formatDate,
+  getRelativeTimeString,
+  STAGE_LABELS,
+  STAGE_BADGE_COLORS,
+} from "../utils/dateHelpers";
 
 export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
   const [loadingId, setLoadingId] = useState(null);
@@ -9,9 +23,9 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
 
   const toggleNoteHint = (problemId, e) => {
     e.stopPropagation();
-    setRevealedNotes(prev => ({
+    setRevealedNotes((prev) => ({
       ...prev,
-      [problemId]: !prev[problemId]
+      [problemId]: !prev[problemId],
     }));
   };
 
@@ -23,9 +37,9 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
       confetti({
         particleCount: 50,
         spread: 60,
-        origin: { y: 0.7 }
+        origin: { y: 0.7 },
       });
-      await onRevise(problem._id, 'complete');
+      await onRevise(problem._id, "complete");
     } finally {
       setLoadingId(null);
     }
@@ -35,7 +49,7 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
     e.stopPropagation();
     setLoadingId(problem._id);
     try {
-      await onRevise(problem._id, 'skip');
+      await onRevise(problem._id, "skip");
     } finally {
       setLoadingId(null);
     }
@@ -43,17 +57,18 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
 
   if (dueProblems.length === 0) {
     return (
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 via-amber-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 text-2xl flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 text-xl flex-shrink-0">
             🎯
           </div>
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               All Caught Up! No Revisions Due Today
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-              You've completed all scheduled checkpoints for today. Keep logging new problems as you solve them!
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              You've completed all scheduled checkpoints for today. Keep logging
+              new problems as you solve them!
             </p>
           </div>
         </div>
@@ -79,9 +94,12 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
       {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {dueProblems.map((problem) => {
-          const isOverdue = problem.status === 'overdue';
-          const stageBadge = STAGE_BADGE_COLORS[problem.revisionStage] || STAGE_BADGE_COLORS.day3;
-          const stageLabel = STAGE_LABELS[problem.revisionStage] || problem.revisionStage;
+          const isOverdue = problem.status === "overdue";
+          const stageBadge =
+            STAGE_BADGE_COLORS[problem.revisionStage] ||
+            STAGE_BADGE_COLORS.day3;
+          const stageLabel =
+            STAGE_LABELS[problem.revisionStage] || problem.revisionStage;
           const isProcessing = loadingId === problem._id;
 
           return (
@@ -89,14 +107,14 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
               key={problem._id}
               className={`p-5 rounded-2xl border transition-all duration-200 bg-white dark:bg-leetcode-dark-card flex flex-col justify-between shadow-md relative overflow-hidden ${
                 isOverdue
-                  ? 'border-red-300 dark:border-red-900/60 shadow-red-500/5'
-                  : 'border-amber-300 dark:border-amber-700/60 shadow-amber-500/5'
+                  ? "border-red-300 dark:border-red-900/60 shadow-red-500/5"
+                  : "border-amber-300 dark:border-amber-700/60 shadow-amber-500/5"
               }`}
             >
               {/* Top Accent Strip */}
               <div
                 className={`absolute top-0 left-0 right-0 h-1 ${
-                  isOverdue ? 'bg-red-500' : 'bg-leetcode-orange'
+                  isOverdue ? "bg-red-500" : "bg-leetcode-orange"
                 }`}
               />
 
@@ -107,7 +125,9 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
                     <span className="font-mono font-bold text-sm px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-leetcode-orange border border-gray-200 dark:border-zinc-700">
                       #{problem.questionNumber}
                     </span>
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${stageBadge}`}>
+                    <span
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${stageBadge}`}
+                    >
                       {stageLabel}
                     </span>
                   </div>
@@ -123,7 +143,8 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
 
                 {/* Question Title */}
                 <h3 className="font-semibold text-gray-900 dark:text-white text-base line-clamp-1 mb-2">
-                  {problem.questionTitle || `LeetCode Problem #${problem.questionNumber}`}
+                  {problem.questionTitle ||
+                    `LeetCode Problem #${problem.questionNumber}`}
                 </h3>
 
                 {/* LeetCode link */}
@@ -142,12 +163,16 @@ export function DueSection({ dueProblems = [], onRevise, onViewHistory }) {
                   {isOverdue ? (
                     <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>{getRelativeTimeString(problem.nextRevisionDate)}</span>
+                      <span>
+                        {getRelativeTimeString(problem.nextRevisionDate)}
+                      </span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>Due Today ({formatDate(problem.nextRevisionDate)})</span>
+                      <span>
+                        Due Today ({formatDate(problem.nextRevisionDate)})
+                      </span>
                     </div>
                   )}
                 </div>
